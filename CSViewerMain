@@ -1,0 +1,16 @@
+# from browseCSVtextbrowser import *
+from CSViewer import *
+
+# import additional libraries
+import sys
+from PyQt5.QtWidgets import QApplication
+
+# main execution loop
+if __name__ == "__main__":
+    app = QApplication( sys.argv )
+
+    # w = browseCSVtextbrowser()
+    w = CSViewer()
+    w.show()
+
+    sys.exit( app.exec_())
