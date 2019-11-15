@@ -1,0 +1,162 @@
+# import libraries
+
+from PyQt5.QtWidgets import QWidget, QPushButton, QLabel, QLineEdit, QHBoxLayout, QVBoxLayout,\
+    QMainWindow, QStatusBar, QFileDialog, QRadioButton,QTextBrowser, QScrollBar
+import os.path
+import time
+
+# class definition
+class CSViewer(QMainWindow):
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+
+        self.initUI()
+
+    def initUI(self):
+        widget = QWidget(self)
+
+        # scrollbar stuff below
+
+        self.browser = QTextBrowser(self)
+        self.browser.setLineWrapMode(False)
+
+        horizbar = QScrollBar()
+        horizbar.setVisible(True)
+        self.browser.setHorizontalScrollBar(horizbar)
+
+        # scrollbar stuff above
+
+        self.status = QStatusBar(self)
+
+
+        self.fileDialogue= QFileDialog(self)
+
+        self.fileNameInput = QLineEdit(self)
+        self.fileNameInput.editingFinished.connect(self.getName)
+
+        self.fieldsep = ','
+        self.fileflag=0
+        self.option1 = QRadioButton('Comma (,)')
+        QRadioButton.setChecked(self.option1,True)
+        self.option1.toggled.connect(self.getFieldsep)
+
+        self.option2 = QRadioButton('Semicolon (;)')
+        self.option2.toggled.connect(self.getFieldsep)
+
+        self.option3 = QRadioButton('Colon (:)')
+        self.option3.toggled.connect(self.getFieldsep)
+
+        self.option4 = QRadioButton('Tab (\\t)')
+        self.option4.toggled.connect(self.getFieldsep)
+
+
+        layout1 = QHBoxLayout()
+        widget.filename = self.fileNameInput
+        layout1.addWidget(QLabel('File:'))
+        layout1.addWidget(widget.filename)
+
+        filebutton=QPushButton('Choose File', self)
+        layout1.addWidget(filebutton)
+        filebutton.clicked.connect(self.getFile)
+
+
+        layout2 = QHBoxLayout()
+        layout2.addWidget(self.browser)
+        
+        layout3 = QHBoxLayout()
+        layout3.addWidget(QLabel("Field Separator"))
+
+        layout4 = QHBoxLayout()
+        layout4.addWidget(self.option1)
+        layout4.addWidget(self.option2)
+        layout4.addWidget(self.option3)
+        layout4.addWidget(self.option4)
+
+        layout = QVBoxLayout()
+        layout.addLayout(layout1)
+        layout.addLayout(layout2)
+        layout.addLayout(layout3)
+        layout.addLayout(layout4)
+
+        widget.setLayout(layout)
+
+        self.setCentralWidget(widget)
+        self.setStatusBar(self.status)
+
+
+    def getFieldsep(self):
+        if self.option1.isChecked():
+            self.fieldsep = ','
+
+        if self.option2.isChecked():
+            self.fieldsep = ';'
+
+        if self.option3.isChecked():
+            self.fieldsep = ':'
+
+        if self.option4.isChecked():
+            self.fieldsep = '\t'
+
+        self.status.showMessage('Current Field Separator ({})'.format(self.fieldsep))
+        self.status.show()
+        if hasattr(self, 'filename'):
+            self.parseFile()
+        else:
+            self.error(0)
+
+    def getName(self):
+        if os.path.isfile(self.fileNameInput.text()):
+            if self.fileNameInput.text == '':
+                self.error(1)
+            else:
+                self.filename = self.fileNameInput.text()
+            self.parseFile()
+        else:
+            self.error(1)
+
+
+
+    def getFile(self):
+        if self.fileflag==0:
+            self.filename=QFileDialog.getOpenFileName(self)[0]
+        else:
+            if self.lastfilename:
+                self.filename = self.lastfilename
+
+        self.parseFile()
+
+    def parseFile(self):
+        if 'csv' not in self.fileNameInput.text():
+            self.error(2)
+
+        self.browser.clear()
+        self.currentfile = open(self.filename, 'r')
+        with self.currentfile:
+            text = self.currentfile.read()
+
+            for lines in text.split('\n'):
+                curr=self.fieldsep+' '
+
+                self.browser.append(curr.join((x.strip(',')) for x in lines.split(',')))
+
+            self.fileNameInput.setText(self.filename)
+
+            self.lastfilename = self.filename
+
+            self.fileflag = 0
+        self.setWindowTitle('CSV Viewer: ' + self.filename)
+    def error(self,input):
+
+        if input==0:
+            self.status.showMessage(
+                "ERROR: Please open a file!")
+            self.browser.setText('Please select a file.')
+        elif input==1:
+            self.status.showMessage(
+                "ERROR: Please enter a valid file name")
+        elif input==2:
+            self.status.showMessage(
+                "ERROR: Please select a .csv file")
+
+
