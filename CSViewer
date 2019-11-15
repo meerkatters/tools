@@ -83,7 +83,7 @@ class CSViewer(QMainWindow):
 
         self.setCentralWidget(widget)
         self.setStatusBar(self.status)
-
+        self.setWindowTitle('CSV Viewer: Please select a file to open')
 
     def getFieldsep(self):
         if self.option1.isChecked():
@@ -127,7 +127,7 @@ class CSViewer(QMainWindow):
         self.parseFile()
 
     def parseFile(self):
-        if 'csv' not in self.fileNameInput.text():
+        if 'csv' or 'txt' not in self.fileNameInput.text():
             self.error(2)
 
         self.browser.clear()
@@ -157,6 +157,6 @@ class CSViewer(QMainWindow):
                 "ERROR: Please enter a valid file name")
         elif input==2:
             self.status.showMessage(
-                "ERROR: Please select a .csv file")
+                "ERROR: Please select a .csv or .txt file")
 
 
