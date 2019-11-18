@@ -2,6 +2,7 @@
 
 from PyQt5.QtWidgets import QWidget, QPushButton, QLabel, QLineEdit, QHBoxLayout, QVBoxLayout,\
     QMainWindow, QStatusBar, QFileDialog, QRadioButton,QTextBrowser, QScrollBar
+from PyQt5.QtGui import QPixmap
 import os.path as osp
 
 # class definition
@@ -16,17 +17,29 @@ class CSViewer(QMainWindow):
     def initUI(self):
         """ The following is added to the constructor by calling self.initUI() within __init__"""
         self.ProgramDetails = """
-           CSViewer: A simple application to view CSV and text files.
-           Version 1.0
-           Open a .csv or .txt file by either entering its full path in the field above or by 
-           selecting a file via the "Open File" dialogue in the upper right of the window.
-           The field separator of the displayed csv can be selected below:
-           Note, changing the field operator within the text browser does not modify the .csv or .txt file
-           on disk, merely in the memory of the computer while the application in running. In other words,
-           THIS APPLICATION IS READ-ONLY.
-           Written by Nicolette Lewis in November 2019 at the University of Washington
-           For the purpose of Assignment 5 in Engineering Computing: CESG 505
-           """
+         ___  ___ _   _      __ _   _   _  __  __
+        ||     ||__  \\\\  /  o  ||_ \\\\  /\\\\  / ||_ ||_|
+        ||__  __||  \\\\/  ||| ||_  \\\\/  \\\\/  ||_ ||  \\
+        
+    CSViewer: A simple application to view CSV and text files.                      
+                         Version 1.0
+                         
+    Open a .csv or .txt file by either entering its full path in the field above or by 
+        selecting a file via the "Choose File" dialogue in the upper right of the window.
+        
+    The field separator of the displayed csv can be selected below:
+    
+            Note, changing the field operator within the text browser does not modify the .csv or .txt file
+            on disk, merely in the memory of the computer while the application in running. In other words,
+                                THIS APPLICATION IS READ-ONLY.
+                                
+    Written by Nicolette Lewis in November 2019 at the University of Washington, Seattle Campus
+        for the purpose of Assignment 5 in Engineering Computing: CESG 505
+    """
+        self.Icon= QLabel(self)
+        self.checkIcon = QPixmap('check.png').scaled(24, 24)
+        self.warnIcon = QPixmap('warn.png').scaled(24, 24)
+        self.Icon.setPixmap(self.checkIcon)
 
         self.browser = QTextBrowser(self)                # Initializing the text browser
         self.status = QStatusBar(self)                   # Initializing the status bar of the main window
@@ -38,6 +51,7 @@ class CSViewer(QMainWindow):
         horizbar.setVisible(True)                        # Switching the visibility of the scrollbar on
         self.browser.setHorizontalScrollBar(horizbar)    # Finally attaching the scrollbar to horizontal movement
                                                             # within the text browser
+        self.browser.setMinimumSize(500,300);
         widget = QWidget(self)                           # Creating a widget to store layouts in
 
         self.fieldsepop1 = QRadioButton('Comma (,)')     # Initializing the Radio Buttons which control which field
@@ -57,7 +71,7 @@ class CSViewer(QMainWindow):
         layout1.addWidget(QLabel('File:'))              # Adding a label to the first horizontal layout before the
         layout1.addWidget(self.fileNameInput)           # Line Edit field is added to the layout here
         layout1.addWidget(filebutton)                   # Adding the file selection dialogue button to layout 1
-
+        layout1.addWidget(self.Icon)
         # Adding widegts to layout 2
         layout2.addWidget(self.browser)                 # Adding the text browser to layout 2
 
@@ -92,6 +106,7 @@ class CSViewer(QMainWindow):
                                                             # "editingFinished" signal to the method associated with
                                                            # loading the file and then sending it to be parsed
         self.setCentralWidget(widget)             # Assigning the dummy widget to the central widget of the main window
+
         self.setStatusBar(self.status)            # Setting the status bar to the default message
         self.setWindowTitle('CSV Viewer: Please select a file to open')
                                                   # Setting the window title to the default message
@@ -166,7 +181,7 @@ class CSViewer(QMainWindow):
                 # Setting the window title and the status bar message to the full path and abridged path respectively
                 self.setWindowTitle('CSV Viewer: ' + self.filename)             # main window title, full path
                 self.status.showMessage('Viewing ' + self.filename.split('/')[-1])  # status bar, abridged path
-
+                self.Icon.setPixmap(self.checkIcon)
         except:
             if '.csv' in self.filename:         # if the file is a csv and cant be read, it might be corrupt or
                 self.error(2)                   # delimited with something wonky
@@ -181,14 +196,17 @@ class CSViewer(QMainWindow):
             self.status.showMessage(
                 "Please open a file.")
             self.browser.setText(self.ProgramDetails)
+            self.Icon.setPixmap(self.warnIcon)
         elif input==1:
             self.status.showMessage(
-                "Please enter a valid file name")
-            self.fileNameInput.setText(self.filename)
+                "Please enter a valid file name.")
+            self.Icon.setPixmap(self.warnIcon)
         elif input==2:
             self.status.showMessage(
                 "ERROR: File cannot be read")
+            self.Icon.setPixmap(self.warnIcon)
         elif input == 3:
             self.status.showMessage(
                 "Please select a .csv or .txt file")
             self.browser.setText(self.ProgramDetails)
+            self.Icon.setPixmap(self.warnIcon)
