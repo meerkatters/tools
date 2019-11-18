@@ -2,161 +2,193 @@
 
 from PyQt5.QtWidgets import QWidget, QPushButton, QLabel, QLineEdit, QHBoxLayout, QVBoxLayout,\
     QMainWindow, QStatusBar, QFileDialog, QRadioButton,QTextBrowser, QScrollBar
-import os.path
-import time
+import os.path as osp
 
 # class definition
 class CSViewer(QMainWindow):
 
     def __init__(self, parent=None):
-        super().__init__(parent)
 
-        self.initUI()
+        super().__init__(parent)                                    # Inheriting the constructor from QMainWindow
+
+        self.initUI()                                               # Adding some things to the constructor
 
     def initUI(self):
-        widget = QWidget(self)
+        """ The following is added to the constructor by calling self.initUI() within __init__"""
+        self.ProgramDetails = """
+           CSViewer: A simple application to view CSV and text files.
+           Version 1.0
+           Open a .csv or .txt file by either entering its full path in the field above or by 
+           selecting a file via the "Open File" dialogue in the upper right of the window.
+           The field separator of the displayed csv can be selected below:
+           Note, changing the field operator within the text browser does not modify the .csv or .txt file
+           on disk, merely in the memory of the computer while the application in running. In other words,
+           THIS APPLICATION IS READ-ONLY.
+           Written by Nicolette Lewis in November 2019 at the University of Washington
+           For the purpose of Assignment 5 in Engineering Computing: CESG 505
+           """
 
-        # scrollbar stuff below
+        self.browser = QTextBrowser(self)                # Initializing the text browser
+        self.status = QStatusBar(self)                   # Initializing the status bar of the main window
+        self.fileDialogue = QFileDialog(self)            # Initializing the popup file dialogue for selection of files
+        self.fileNameInput = QLineEdit(self)             # Initializing the filename Line Edit thing
 
-        self.browser = QTextBrowser(self)
-        self.browser.setLineWrapMode(False)
+        self.browser.setLineWrapMode(False)              # Turning linewrap off so the horizontal scrollbar is enabled
+        horizbar = QScrollBar()                          # Initializing a scrollbar to be attached to the text browser
+        horizbar.setVisible(True)                        # Switching the visibility of the scrollbar on
+        self.browser.setHorizontalScrollBar(horizbar)    # Finally attaching the scrollbar to horizontal movement
+                                                            # within the text browser
+        widget = QWidget(self)                           # Creating a widget to store layouts in
 
-        horizbar = QScrollBar()
-        horizbar.setVisible(True)
-        self.browser.setHorizontalScrollBar(horizbar)
+        self.fieldsepop1 = QRadioButton('Comma (,)')     # Initializing the Radio Buttons which control which field
+        self.fieldsepop2 = QRadioButton('Semicolon (;)')    # operator the csv will be displayed in
+        self.fieldsepop3 = QRadioButton('Colon (:)')
+        self.fieldsepop4 = QRadioButton('Tab (\\t)')
 
-        # scrollbar stuff above
-
-        self.status = QStatusBar(self)
-
-
-        self.fileDialogue= QFileDialog(self)
-
-        self.fileNameInput = QLineEdit(self)
-        self.fileNameInput.editingFinished.connect(self.getName)
-
-        self.fieldsep = ','
-        self.fileflag=0
-        self.option1 = QRadioButton('Comma (,)')
-        QRadioButton.setChecked(self.option1,True)
-        self.option1.toggled.connect(self.getFieldsep)
-
-        self.option2 = QRadioButton('Semicolon (;)')
-        self.option2.toggled.connect(self.getFieldsep)
-
-        self.option3 = QRadioButton('Colon (:)')
-        self.option3.toggled.connect(self.getFieldsep)
-
-        self.option4 = QRadioButton('Tab (\\t)')
-        self.option4.toggled.connect(self.getFieldsep)
-
-
-        layout1 = QHBoxLayout()
-        widget.filename = self.fileNameInput
-        layout1.addWidget(QLabel('File:'))
-        layout1.addWidget(widget.filename)
-
-        filebutton=QPushButton('Choose File', self)
-        layout1.addWidget(filebutton)
-        filebutton.clicked.connect(self.getFile)
-
-
+        filebutton = QPushButton('Choose File', self)    # Initializing a button to select the file to be opened using
+                                                            # a dialogue
+        # Horizontal Layouts
+        layout1 = QHBoxLayout()                          # Initializing the horizontal box layouts for various buttons
         layout2 = QHBoxLayout()
-        layout2.addWidget(self.browser)
-        
         layout3 = QHBoxLayout()
-        layout3.addWidget(QLabel("Field Separator"))
-
         layout4 = QHBoxLayout()
-        layout4.addWidget(self.option1)
-        layout4.addWidget(self.option2)
-        layout4.addWidget(self.option3)
-        layout4.addWidget(self.option4)
 
-        layout = QVBoxLayout()
-        layout.addLayout(layout1)
-        layout.addLayout(layout2)
-        layout.addLayout(layout3)
-        layout.addLayout(layout4)
+        # Adding widgets to layout 1
+        layout1.addWidget(QLabel('File:'))              # Adding a label to the first horizontal layout before the
+        layout1.addWidget(self.fileNameInput)           # Line Edit field is added to the layout here
+        layout1.addWidget(filebutton)                   # Adding the file selection dialogue button to layout 1
 
-        widget.setLayout(layout)
+        # Adding widegts to layout 2
+        layout2.addWidget(self.browser)                 # Adding the text browser to layout 2
 
-        self.setCentralWidget(widget)
-        self.setStatusBar(self.status)
+        # Adding widgets to layout 3
+        layout3.addWidget(QLabel("Field Separator"))    # Adding a label to the layout just above the selection field
+                                                            # separator Radio Buttons
+        # Adding wdigets to layout 4
+        layout4.addWidget(self.fieldsepop1)             # Adding the field separator radio buttons to the layout
+        layout4.addWidget(self.fieldsepop2)
+        layout4.addWidget(self.fieldsepop3)
+        layout4.addWidget(self.fieldsepop4)
+
+        # Creating a vertical layout within which layouts 1-4 will reside
+        layout = QVBoxLayout()                          # Initializing the vertical layout
+        layout.addLayout(layout1)                       # Adding layouts to the vertical layout
+        layout.addLayout(layout2)                       # .
+        layout.addLayout(layout3)                       # .
+        layout.addLayout(layout4)                       # .
+        # Assigning layout to a dummy widget which will be assigned to be the Central Widget of the QMainWindow window
+        widget.setLayout(layout)                        # Setting layout of the widget
+        # Setting commas as the default field separator of the input file
+        QRadioButton.setChecked(self.fieldsepop1, True)
+
+        # Creating connections :)
+        filebutton.clicked.connect(self.getFile)                # Connecting the Open File button to the file dialogue
+        self.fieldsepop1.toggled.connect(self.getFieldsep)      # Connecting the Radio Buttons to a method acquiring
+        self.fieldsepop2.toggled.connect(self.getFieldsep)      # the current selected field separator and calling the
+        self.fieldsepop3.toggled.connect(self.getFieldsep)      # file parsing method
+        self.fieldsepop4.toggled.connect(self.getFieldsep)
+        
+        self.fileNameInput.editingFinished.connect(self.getName)    # Connecting the filename LineEdit field input
+                                                            # "editingFinished" signal to the method associated with
+                                                           # loading the file and then sending it to be parsed
+        self.setCentralWidget(widget)             # Assigning the dummy widget to the central widget of the main window
+        self.setStatusBar(self.status)            # Setting the status bar to the default message
         self.setWindowTitle('CSV Viewer: Please select a file to open')
+                                                  # Setting the window title to the default message
+        self.getFieldsep()                        # Initializing field separator attribute
+        # Printing the program details in the text browser until a file has been opened
+        self.browser.setText(self.ProgramDetails)
+
 
     def getFieldsep(self):
-        if self.option1.isChecked():
+        """ Checks to see if a field separator radio button has been toggled and sets the current field separator
+            to be that of the radio button that is toggled and then parses the file to be displayed with that
+            field separator """
+
+        if self.fieldsepop1.isChecked():        # checking to see if the radio button is toggled
             self.fieldsep = ','
 
-        if self.option2.isChecked():
+        if self.fieldsepop2.isChecked():        # checking to see if the radio button is toggled
             self.fieldsep = ';'
 
-        if self.option3.isChecked():
+        if self.fieldsepop3.isChecked():        # checking to see if the radio button is toggled
             self.fieldsep = ':'
 
-        if self.option4.isChecked():
+        if self.fieldsepop4.isChecked():        # checking to see if the radio button is toggled
             self.fieldsep = '\t'
 
-        self.status.showMessage('Current Field Separator ({})'.format(self.fieldsep))
-        self.status.show()
-        if hasattr(self, 'filename'):
-            self.parseFile()
+        if hasattr(self, 'filename'):           # if the window has opened a file, then parse it again to be shown with
+            self.parseFile()                    # the selected field separator by sending to the parsing method
         else:
-            self.error(0)
+            self.error(0)                       # if the application hasn't opened a file, then an error is shown
+
 
     def getName(self):
-        if os.path.isfile(self.fileNameInput.text()):
-            if self.fileNameInput.text == '':
-                self.error(1)
-            else:
-                self.filename = self.fileNameInput.text()
-            self.parseFile()
+        if osp.isfile(self.fileNameInput.text()) and self.fileNameInput.text() != '':   # if the file exists
+            self.filename = self.fileNameInput.text()     # assign the filename string to the variable self.filename
+            self.parseFile()                               # then parse the file
         else:
-            self.error(1)
-
+            self.error(1)                                  # if the file doesn't exist, then a different error is shown
 
 
     def getFile(self):
-        if self.fileflag==0:
-            self.filename=QFileDialog.getOpenFileName(self)[0]
-        else:
-            if self.lastfilename:
-                self.filename = self.lastfilename
+        self.filename = QFileDialog.getOpenFileName(self)[0]    # reads the file name of the file object read
+        self.parseFile()                                        # assigns it to self.filename, calls the parsing method
 
-        self.parseFile()
 
     def parseFile(self):
-        if 'csv' or 'txt' not in self.fileNameInput.text():
-            self.error(2)
+        """ This is the parsing method. It works by finding the first common delimiter in the file provided
+            (if the file is a csv) then parses the file into components and returns those components delimited by
+            the field separator selected by the user via the radio buttons in the application
+            If the file is not a csv but instead a text file, the program just prints the text in the browser window
+            If the file is not a txt or csv, or is a csv and cannot be broken into its components because of an uncommon
+            delimitation (not , ; or :), then the program returns an error telling the user that the file cannot be read """
 
-        self.browser.clear()
-        self.currentfile = open(self.filename, 'r')
-        with self.currentfile:
-            text = self.currentfile.read()
+        try:
+            if '.csv' or '.txt' in self.filename:           # then the file is parsed. otherwise an error is shown.
+                self.browser.clear()                        # Clearing the text browser window
 
-            for lines in text.split('\n'):
-                curr=self.fieldsep+' '
+                currentfile = open(self.filename, 'r')      # Opening the file of interest
 
-                self.browser.append(curr.join((x.strip(',')) for x in lines.split(',')))
+                text = currentfile.read()                   # Reading the file
 
-            self.fileNameInput.setText(self.filename)
+                for i in [',', ';', ':', '\\t']:            # Finding the first delimiter in the file
+                    if i in text:                               # If the delimiter is in the file
+                        inputfieldsep = i                           # the delimiter is set as the input delimiter
+                if '.csv' in self.filename:                 # If the file is a csv...
+                    for lines in text.split('\n'):              # Split it up into lines,
+                        curr=self.fieldsep+' '                  # Then further split by input delimiter
+                                                                # and append the output to the text browser (below)
+                        self.browser.append(curr.join((x.strip(inputfieldsep)) for x in lines.split(inputfieldsep)))
+                else:                                       # If the file isn't a csv...
+                    self.browser.setText(text)              # just print it in the browser
+                self.fileNameInput.setText(self.filename)   # Setting the Line Edit field to the name of the file path
+                # Setting the window title and the status bar message to the full path and abridged path respectively
+                self.setWindowTitle('CSV Viewer: ' + self.filename)             # main window title, full path
+                self.status.showMessage('Viewing ' + self.filename.split('/')[-1])  # status bar, abridged path
 
-            self.lastfilename = self.filename
+        except:
+            if '.csv' in self.filename:         # if the file is a csv and cant be read, it might be corrupt or
+                self.error(2)                   # delimited with something wonky
+            else:
+                self.error(3)                   # if it is not a csv, then a different error is shown
 
-            self.fileflag = 0
-        self.setWindowTitle('CSV Viewer: ' + self.filename)
     def error(self,input):
-
+        """
+        This method holds all of the error messaging of the application
+        """
         if input==0:
             self.status.showMessage(
-                "ERROR: Please open a file!")
-            self.browser.setText('Please select a file.')
+                "Please open a file.")
+            self.browser.setText(self.ProgramDetails)
         elif input==1:
             self.status.showMessage(
-                "ERROR: Please enter a valid file name")
+                "Please enter a valid file name")
+            self.fileNameInput.setText(self.filename)
         elif input==2:
             self.status.showMessage(
-                "ERROR: Please select a .csv or .txt file")
-
-
+                "ERROR: File cannot be read")
+        elif input == 3:
+            self.status.showMessage(
+                "Please select a .csv or .txt file")
+            self.browser.setText(self.ProgramDetails)
